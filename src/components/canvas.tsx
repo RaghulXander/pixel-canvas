@@ -1,28 +1,41 @@
 import { useRef, useEffect, useCallback } from "react";
+import classnames from "classnames";
 
-export const CustomCanvas = ({ activeColor = "#000", pixelDensity = 8 }) => {
-  const canvasRef = useRef(null);
+export const CustomCanvas = ({
+  activeColor = "#000",
+  pixelDensity = 8,
+  activeTool,
+}) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
   const evenColor = "#f0f0f0";
   const oddColor = "#d3d3d3";
 
-  const drawCheckerboard = useCallback((ctx, width, height) => {
+  useEffect(() => {
+    return () => {
+      if (canvasRef.current) {
+        // canvasRef.current.getContext("2d");
+      }
+    };
+  }, []);
+
+  const drawPixelInCanvas = useCallback((context, width, height) => {
     for (let i = 0; i < height; i += pixelDensity) {
       for (let j = 0; j < width; j += pixelDensity) {
         const isEven = ((i + j) / pixelDensity) % 2 === 0;
-        ctx.fillStyle = isEven ? evenColor : oddColor;
-        ctx.fillRect(i, j, pixelDensity, pixelDensity);
+        context.fillStyle = isEven ? evenColor : oddColor;
+        context.fillRect(i, j, pixelDensity, pixelDensity);
       }
     }
   }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    canvas.width = 600;
-    canvas.height = 600;
+    canvas.width = 300;
+    canvas.height = 300;
 
-    const ctx = canvas.getContext("2d");
-    drawCheckerboard(ctx, canvas.width, canvas.height);
+    const context = canvas.getContext("2d");
+    drawPixelInCanvas(context, canvas.width, canvas.height);
   }, []);
 
   const getCell = (e) => {
@@ -40,11 +53,11 @@ export const CustomCanvas = ({ activeColor = "#000", pixelDensity = 8 }) => {
     (e) => {
       if (!canvasRef.current || !isDrawing.current) return;
 
-      const ctx = canvasRef.current.getContext("2d");
+      const context = canvasRef.current.getContext("2d");
       const { x, y } = getCell(e);
 
-      ctx.fillStyle = activeColor;
-      ctx.fillRect(x, y, pixelDensity, pixelDensity);
+      context.fillStyle = activeColor;
+      context.fillRect(x, y, pixelDensity, pixelDensity);
     },
     [activeColor]
   );
@@ -52,6 +65,13 @@ export const CustomCanvas = ({ activeColor = "#000", pixelDensity = 8 }) => {
   const handleMouseDown = useCallback((e) => {
     if (!canvasRef.current || isDrawing.current) return;
     isDrawing.current = true;
+    // context.moveTo(e.clientX, e.clientY);
+    // context.lineTo(e.clientY, e.clientY);
+    // context.lineTo(200, 100)
+    // context.stroke();
+    // context.moveTo(e.clientX, e.clientY);
+    // context.lineTo(e.clientX, e.clientY);
+    //  console.log("context", context);
     handleMouseMove(e);
   }, []);
 
@@ -61,15 +81,20 @@ export const CustomCanvas = ({ activeColor = "#000", pixelDensity = 8 }) => {
   }, []);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="border"
-      onMouseMove={handleMouseMove}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseDownCapture={handleMouseDown}
-      onPointerDown={handleMouseDown}
-      onPointerUp={handleMouseUp}
-    />
+    <>
+      <canvas
+        ref={canvasRef}
+        className={classnames({
+          "disabled bg-gray-400 pointer-events-none cursor-disabled":
+            activeTool === "eraser",
+        })}
+        onMouseMove={handleMouseMove}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onMouseDownCapture={handleMouseDown}
+        onPointerDown={handleMouseDown}
+        onPointerUp={handleMouseUp}
+      />
+    </>
   );
 };
